@@ -16,8 +16,17 @@ class TasksApi {
         return this._fetch(options)
     }
 
-    _fetch(options) {
-        return fetch(this.url, options)
+    update(data, id) {
+        const options = {
+            method: "PUT",
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' }
+        }
+        return this._fetch(options, id)
+    }
+
+    _fetch(options, id = '') {
+        return fetch(this.url + id, options)
             .then(resp => {
                 if (resp.ok) return resp.json()
                 else Promise.reject(resp)

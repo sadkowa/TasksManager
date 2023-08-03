@@ -45,6 +45,9 @@ body {
 }
 
 .section__header {
+    display: flex;
+    justify-content: center;
+    gap:20px;
     font-size: 20px;
     color: rgb(6, 11, 77);
 }
@@ -75,12 +78,8 @@ body {
 }
 
 .active {
-    background-color: white;
+    background-color: rgb(226, 200, 82);
     color: rgb(1, 24, 58);
-}
-
-.active:hover {
-    background-color: rgb(183, 190, 199);
 }
 
 .form__button {
