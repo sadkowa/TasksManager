@@ -22,7 +22,7 @@ class TasksApi {
             body: JSON.stringify(data),
             headers: { 'Content-Type': 'application/json' }
         }
-        return this._fetch(options, id)
+        return this._fetch(options, `/${id}`)
     }
 
     _fetch(options, id = '') {

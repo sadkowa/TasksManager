@@ -17,6 +17,10 @@ class TasksManager extends React.Component {
         })
     }
 
+    // componentDidUpdate() {
+    //     console.log(this.state.tasks)
+    // } 
+
     onClick = () => {
         const { tasks } = this.state;
         console.log(tasks)
@@ -29,15 +33,24 @@ class TasksManager extends React.Component {
     formHandler = e => {
         e.preventDefault()
 
-        const newItem = {
-            name: this.state.task,
-            time: '00:00:00',
+        const { task } = this.state
+
+        if (!task) return prompt('Pole "Nazwa zadania" nie może być puste')
+
+        const newItem = this.createNewTaskObj(task)
+
+        this.tasksApi.add(newItem)
+            .then(this.addTaskToState.bind(this))
+    }
+
+    createNewTaskObj(task) {
+        return {
+            name: task,
+            time: 0,
             isRunning: false,
             isDone: false,
             isRemoved: false
         }
-        this.tasksApi.add(newItem)
-            .then(this.addTaskToState.bind(this))
     }
 
     addTaskToState(item) {
@@ -49,50 +62,65 @@ class TasksManager extends React.Component {
     }
 
     countButtonHandler = e => {
+        const id = this.getItemId(e)
+
+        if (e.target.textContent === 'start') {
+            this.startCount(id)
+        }
+
+        if (e.target.textContent === 'stop') {
+            this.stopCount(id)
+        }
+
         this.changeButtonDisplay(e.target)
+    }
 
-        if (e.target.classList.contains('active')) {
-            this.startCount(e)
-        } else this.stopCount()
+    startCount(id) {
+        this.idInterval = setInterval(() => {
+            this.setState(state => {
+                const newTasks = state.tasks.map(task => {
+                    if (task.id === id) {
+                        const newItem = {
+                            ...task,
+                            time: task.time + 1,
+                            isRunning: true,
+                        }
+                        this.tasksApi.update(newItem, id)
+                        return newItem
+                    } return task
+                })
+                return { tasks: newTasks }
+            })
+        }, 1000)
+    }
 
+    stopCount(id) {
+        clearInterval(this.idInterval)
+
+        this.setState(state => {
+            const newTasks = state.tasks.map(task => {
+                if (task.id === id) {
+                    const newItem = {
+                        ...task,
+                        isRunning: false,
+                    }
+                    this.tasksApi.update(newItem, id)
+                    return newItem
+                } return task
+            })
+            return { tasks: newTasks }
+        })
+    }
+
+    getItemId = (e) => {
+        const section = e.target.parentElement.parentElement
+
+        return Number(section.getAttribute('id'))
     }
 
     changeButtonDisplay = (el) => {
         el.textContent === 'start' ? el.textContent = 'stop' : el.textContent = "start"
         el.classList.toggle('active')
-    }
-
-    startCount = (e) => {
-        let counter = 0
-
-        this.id = setInterval(() => {
-            counter++
-            this.updateTasks(e, counter)
-
-        }, 1000)
-
-
-    }
-
-    stopCount = () => {
-        clearInterval(this.id)
-    }
-
-    updateTasks = (e, counter) => {
-        const timer = this.createTimer(counter)
-        const section = e.target.parentElement.parentElement
-
-        const nameEl = section.querySelector('.section__name')
-        const taskName = nameEl.textContent
-        const timerEl = section.querySelector('.section__timer')
-
-        const newTasks = [...this.state.tasks]
-        newTasks.forEach(task => {
-            if (task.name === taskName) {
-                timerEl.textContent = timer
-
-            }
-        })
     }
 
     createTimer(counter) {
@@ -107,19 +135,68 @@ class TasksManager extends React.Component {
         return `${hours}:${minutes}:${seconds}`
     }
 
+    finishButtonHandler = e => {
+        const id = this.getItemId(e)
+        const countButton = e.target.previousSibling
+
+        if (countButton.textContent === 'stop') {
+            this.changeButtonDisplay(countButton)
+        }
+
+        clearInterval(this.idInterval)
+
+        this.setState(state => {
+            const newTasks = state.tasks.map(task => {
+                if (task.id === id) {
+                    const newItem = {
+                        ...task,
+                        isRunning: false,
+                        isDone: true,
+                    }
+                    this.tasksApi.update(newItem, id)
+                    return newItem
+                } return task
+            })
+            newTasks.sort((a, b) => {
+                return a.isDone - b.isDone // nie do końca działa tak jak bym chciała (jeśli są 2 elementy z isDone=true bieżący element nie jest przesuwany na ostatnie miejsce, tylko na pierwsze z elementów isDone=true)
+            })
+
+            return { tasks: newTasks }
+        })
+    }
+
+    removeButtonHandler = e => {
+        const id = this.getItemId(e)
+        this.setState(state => {
+            const newTasks = state.tasks.filter(task => {
+                if (task.id === id) {
+                    task.isRemoved = true
+                    this.tasksApi.update(task, id)
+                }
+                return task.id !== id
+            })
+            return { tasks: newTasks }
+        })
+    }
+
     render() {
         const { tasks } = this.state
+
         const tasksSections = tasks.map(task => {
+            const ifDisabled = task.isDone ? false : true
+            const classListDeleteButton = task.isDone ? 'section__button button' : 'section__button button button--disabled'
+            const classListStartCountButton = task.isDone ? 'section__button button button--disabled' : 'section__button button '
+            const classListFinishButton = task.isDone ? 'section__button button button--done' : 'section__button button'
             return (
-                <section className='main__section section'>
+                <section id={task.id} className='main__section section'>
                     <header className='section__header'>
                         <h3 className='section__name'>{task.name}</h3>
-                        <h3 className='section__timer'>{task.time}</h3>
+                        <h3 className='section__timer'>{this.createTimer(task.time)}</h3>
                     </header>
                     <footer className='section__footer'>
-                        <button className='section__button button' onClick={this.countButtonHandler}>start</button>
-                        <button className='section__button button'>zakończone</button>
-                        <button className='section__button button button--disabled' disabled={true}>usuń</button>
+                        <button className={classListStartCountButton} disabled={!ifDisabled} onClick={this.countButtonHandler}>start</button>
+                        <button className={classListFinishButton} onClick={this.finishButtonHandler}>zakończone</button>
+                        <button className={classListDeleteButton} disabled={ifDisabled} onClick={this.removeButtonHandler}>usuń</button>
                     </footer>
                 </section>
             )

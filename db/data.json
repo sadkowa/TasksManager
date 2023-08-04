@@ -1,20 +1,36 @@
 {
   "data": [
     {
-      "name": "Zad 4",
-      "time": "00:00:00",
+      "name": "Zad1",
+      "time": 13,
       "isRunning": false,
       "isDone": false,
       "isRemoved": false,
       "id": 1
     },
     {
-      "name": "Zad1",
-      "time": "00:00:00",
+      "name": "Zad2",
+      "time": 0,
       "isRunning": false,
       "isDone": false,
       "isRemoved": false,
       "id": 2
+    },
+    {
+      "name": "Zad3",
+      "time": 0,
+      "isRunning": false,
+      "isDone": false,
+      "isRemoved": false,
+      "id": 3
+    },
+    {
+      "name": "Zad4",
+      "time": 0,
+      "isRunning": false,
+      "isDone": false,
+      "isRemoved": false,
+      "id": 4
     }
   ]
 }
