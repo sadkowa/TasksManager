@@ -14,6 +14,7 @@
       "isRunning": false,
       "isDone": false,
       "isRemoved": false,
+      "order": 0,
       "id": 2
     },
     {
@@ -22,6 +23,7 @@
       "isRunning": false,
       "isDone": false,
       "isRemoved": false,
+      "order": 0,
       "id": 3
     },
     {
@@ -30,6 +32,7 @@
       "isRunning": false,
       "isDone": false,
       "isRemoved": false,
+      "order": 0,
       "id": 4
     }
   ]

@@ -11,15 +11,12 @@ class TasksManager extends React.Component {
         super()
         this.tasksApi = new TasksApi()
     }
+    
     componentDidMount() {
         this.tasksApi.load().then(data => {
             data.forEach(this.addTaskToState.bind(this))
         })
     }
-
-    // componentDidUpdate() {
-    //     console.log(this.state.tasks)
-    // } 
 
     onClick = () => {
         const { tasks } = this.state;
@@ -49,7 +46,8 @@ class TasksManager extends React.Component {
             time: 0,
             isRunning: false,
             isDone: false,
-            isRemoved: false
+            isRemoved: false,
+            order: 0
         }
     }
 
@@ -61,18 +59,8 @@ class TasksManager extends React.Component {
         })
     }
 
-    countButtonHandler = e => {
-        const id = this.getItemId(e)
-
-        if (e.target.textContent === 'start') {
-            this.startCount(id)
-        }
-
-        if (e.target.textContent === 'stop') {
-            this.stopCount(id)
-        }
-
-        this.changeButtonDisplay(e.target)
+    toggleTimer = (task) => {
+        !task.isRunning ? this.startCount(task.id) : this.stopCount(task.id)
     }
 
     startCount(id) {
@@ -94,6 +82,10 @@ class TasksManager extends React.Component {
         }, 1000)
     }
 
+    componentWillUnmount() {
+        clearInterval(this.idInterval);
+    }
+
     stopCount(id) {
         clearInterval(this.idInterval)
 
@@ -112,6 +104,42 @@ class TasksManager extends React.Component {
         })
     }
 
+    timerButtonDisabled({ isDone, isRunning }) {
+        const isRunningTask = this.state.tasks.filter(task => task.isRunning)
+        if (isRunningTask.length === 0) {
+            return false
+        }
+        if (isRunningTask.length !== 0) {
+            if (!isRunning) {
+                return true
+            }
+        }
+        if (isDone) {
+            return true
+        }
+    }
+
+    getClassListStartCountButton({ isDone, isRunning }) {
+        const isRunningTask = this.state.tasks.filter(task => task.isRunning)
+        if (isRunningTask.length === 0) {
+            if (isDone) {
+                return 'section__button button button--disabled'
+            }
+            return 'section__button button'
+        }
+        if (isRunningTask.length !== 0) {
+            if (!isRunning) {
+                return 'section__button button button--disabled'
+            } else {
+                return 'section__button button'
+            }
+        }
+        if (isDone) {
+            return 'section__button button button--disabled'
+        }
+    }
+
+
     getItemId = (e) => {
         const section = e.target.parentElement.parentElement
 
@@ -121,6 +149,11 @@ class TasksManager extends React.Component {
     changeButtonDisplay = (el) => {
         el.textContent === 'start' ? el.textContent = 'stop' : el.textContent = "start"
         el.classList.toggle('active')
+    }
+
+    getButtonText(task) {
+        if (task.isRunning) return 'stop'
+        else return 'start'
     }
 
     createTimer(counter) {
@@ -135,14 +168,7 @@ class TasksManager extends React.Component {
         return `${hours}:${minutes}:${seconds}`
     }
 
-    finishButtonHandler = e => {
-        const id = this.getItemId(e)
-        const countButton = e.target.previousSibling
-
-        if (countButton.textContent === 'stop') {
-            this.changeButtonDisplay(countButton)
-        }
-
+    finishButtonHandler = id => {
         clearInterval(this.idInterval)
 
         this.setState(state => {
@@ -152,13 +178,16 @@ class TasksManager extends React.Component {
                         ...task,
                         isRunning: false,
                         isDone: true,
+                        order: Date.now()
                     }
                     this.tasksApi.update(newItem, id)
                     return newItem
                 } return task
             })
             newTasks.sort((a, b) => {
-                return a.isDone - b.isDone // nie do końca działa tak jak bym chciała (jeśli są 2 elementy z isDone=true bieżący element nie jest przesuwany na ostatnie miejsce, tylko na pierwsze z elementów isDone=true)
+                const orderA = Number(a.isDone) + '.' + a.order
+                const orderB = Number(b.isDone) + '.' + b.order
+                return orderA - orderB
             })
 
             return { tasks: newTasks }
@@ -181,22 +210,33 @@ class TasksManager extends React.Component {
 
     render() {
         const { tasks } = this.state
-
         const tasksSections = tasks.map(task => {
-            const ifDisabled = task.isDone ? false : true
-            const classListDeleteButton = task.isDone ? 'section__button button' : 'section__button button button--disabled'
-            const classListStartCountButton = task.isDone ? 'section__button button button--disabled' : 'section__button button '
-            const classListFinishButton = task.isDone ? 'section__button button button--done' : 'section__button button'
+            const { name, time, isDone, id } = task
+
             return (
-                <section id={task.id} className='main__section section'>
+                <section id={id} className='main__section section'>
                     <header className='section__header'>
-                        <h3 className='section__name'>{task.name}</h3>
-                        <h3 className='section__timer'>{this.createTimer(task.time)}</h3>
+                        <h3 className='section__name'>{name}</h3>
+                        <h3 className='section__timer'>{this.createTimer(time)}</h3>
                     </header>
                     <footer className='section__footer'>
-                        <button className={classListStartCountButton} disabled={!ifDisabled} onClick={this.countButtonHandler}>start</button>
-                        <button className={classListFinishButton} onClick={this.finishButtonHandler}>zakończone</button>
-                        <button className={classListDeleteButton} disabled={ifDisabled} onClick={this.removeButtonHandler}>usuń</button>
+                        <button
+                            className={this.getClassListStartCountButton(task)}
+                            disabled={this.timerButtonDisabled(task)}
+                            onClick={() => this.toggleTimer(task)}>
+                            {this.getButtonText(task)}
+                        </button>
+                        <button
+                            className={`section__button button ${isDone ? 'button--done' : ''}`}
+                            onClick={(e)=>this.finishButtonHandler(id)}>
+                            zakończone
+                        </button>
+                        <button
+                            className={`section__button button ${isDone ? '' : 'button--disabled'}`}
+                            disabled={!isDone}
+                            onClick={this.removeButtonHandler}>
+                            usuń
+                        </button>
                     </footer>
                 </section>
             )
@@ -204,12 +244,26 @@ class TasksManager extends React.Component {
         return (
             <>
                 <header className='header'>
-                    <h1 className='header__heading' onClick={this.onClick}>TasksManager</h1>
+                    <h1
+                        className='header__heading'
+                        onClick={this.onClick}>
+                        TasksManager
+                    </h1>
                 </header>
                 <main className='main'>
-                    <form className='main__form form' onSubmit={this.formHandler}>
-                        <input className='form__input' value={this.state.task} onChange={this.inputHandler} name="task" type="text" placeholder='Nazwa zadania' />
-                        <input className='form__button button' type="submit" />
+                    <form
+                        className='main__form form'
+                        onSubmit={this.formHandler}>
+                        <input
+                            className='form__input'
+                            value={this.state.task}
+                            onChange={this.inputHandler}
+                            name="task"
+                            type="text"
+                            placeholder='Nazwa zadania' />
+                        <input
+                            className='form__button button'
+                            type="submit" />
                     </form>
                     {tasksSections}
                 </main>
