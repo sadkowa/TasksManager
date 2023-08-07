@@ -11,11 +11,12 @@ class TasksManager extends React.Component {
         super()
         this.tasksApi = new TasksApi()
     }
-    
+
     componentDidMount() {
-        this.tasksApi.load().then(data => {
-            data.forEach(this.addTaskToState.bind(this))
-        })
+        this.tasksApi.load()
+            .then(data => {
+                data.forEach(this.addTaskToState.bind(this))
+            })
     }
 
     onClick = () => {
@@ -59,9 +60,47 @@ class TasksManager extends React.Component {
         })
     }
 
-    toggleTimer = (task) => {
-        !task.isRunning ? this.startCount(task.id) : this.stopCount(task.id)
+    toggleTimer = ({ isRunning, id }) => {
+        !isRunning ? this.startCount(id) : this.stopCount(id)
     }
+
+    // startCount(id) {
+    //     this.state.tasks.map(task => {
+    //         if (task.id === id) {
+    //             const newItem = {
+    //                 ...task,
+    //                 time: task.time + 1,
+    //                 isRunning: true,
+    //             }
+    //             this.idInterval = setInterval(() => {
+    //                 this.tasksApi.update(newItem, id)
+    //                     .then(() => console.log('ok'))
+    //                     .catch(err=>console.log(err))
+    //                     .finally(()=>this.setState(state=>{
+
+    //                     }))
+    //             })
+
+    //             // return newItem
+    //         }
+    //     })
+
+
+    // }
+
+    // startCount(id) {
+
+
+    //     const filteredItem = this.state.tasks.filter(item => item.id === id)[0]
+    //     const newItem = {
+    //         ...filteredItem,
+    //         time: task.time + 1,
+    //         isRunning: true,
+    //     }
+    //     // console.log(filteredItem)
+    //     console.log(newItem)
+
+    // }
 
     startCount(id) {
         this.idInterval = setInterval(() => {
@@ -73,17 +112,13 @@ class TasksManager extends React.Component {
                             time: task.time + 1,
                             isRunning: true,
                         }
-                        this.tasksApi.update(newItem, id)
+                        this.tasksApi.update(newItem, id) 
                         return newItem
                     } return task
                 })
                 return { tasks: newTasks }
             })
         }, 1000)
-    }
-
-    componentWillUnmount() {
-        clearInterval(this.idInterval);
     }
 
     stopCount(id) {
@@ -107,11 +142,16 @@ class TasksManager extends React.Component {
     timerButtonDisabled({ isDone, isRunning }) {
         const isRunningTask = this.state.tasks.filter(task => task.isRunning)
         if (isRunningTask.length === 0) {
+            if (isDone) {
+                return true
+            }
             return false
         }
         if (isRunningTask.length !== 0) {
             if (!isRunning) {
                 return true
+            } else {
+                return false
             }
         }
         if (isDone) {
@@ -119,7 +159,7 @@ class TasksManager extends React.Component {
         }
     }
 
-    getClassListStartCountButton({ isDone, isRunning }) {
+    getClassList({ isDone, isRunning }) { //wiem, że te 2 metody są bardzo podobne, ale nie wiem jak je połączyć, jeśli mam nie korzystać z DOM
         const isRunningTask = this.state.tasks.filter(task => task.isRunning)
         if (isRunningTask.length === 0) {
             if (isDone) {
@@ -139,18 +179,6 @@ class TasksManager extends React.Component {
         }
     }
 
-
-    getItemId = (e) => {
-        const section = e.target.parentElement.parentElement
-
-        return Number(section.getAttribute('id'))
-    }
-
-    changeButtonDisplay = (el) => {
-        el.textContent === 'start' ? el.textContent = 'stop' : el.textContent = "start"
-        el.classList.toggle('active')
-    }
-
     getButtonText(task) {
         if (task.isRunning) return 'stop'
         else return 'start'
@@ -168,7 +196,7 @@ class TasksManager extends React.Component {
         return `${hours}:${minutes}:${seconds}`
     }
 
-    finishButtonHandler = id => {
+    markDone = id => {
         clearInterval(this.idInterval)
 
         this.setState(state => {
@@ -194,8 +222,7 @@ class TasksManager extends React.Component {
         })
     }
 
-    removeButtonHandler = e => {
-        const id = this.getItemId(e)
+    removeButtonHandler = (id) => {
         this.setState(state => {
             const newTasks = state.tasks.filter(task => {
                 if (task.id === id) {
@@ -221,20 +248,20 @@ class TasksManager extends React.Component {
                     </header>
                     <footer className='section__footer'>
                         <button
-                            className={this.getClassListStartCountButton(task)}
+                            className={this.getClassList(task)}
                             disabled={this.timerButtonDisabled(task)}
                             onClick={() => this.toggleTimer(task)}>
                             {this.getButtonText(task)}
                         </button>
                         <button
                             className={`section__button button ${isDone ? 'button--done' : ''}`}
-                            onClick={(e)=>this.finishButtonHandler(id)}>
+                            onClick={() => this.markDone(id)}>
                             zakończone
                         </button>
                         <button
                             className={`section__button button ${isDone ? '' : 'button--disabled'}`}
                             disabled={!isDone}
-                            onClick={this.removeButtonHandler}>
+                            onClick={() => this.removeButtonHandler(id)}>
                             usuń
                         </button>
                     </footer>
