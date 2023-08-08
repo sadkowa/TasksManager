@@ -4,35 +4,36 @@
       "name": "Zad1",
       "time": 0,
       "isRunning": false,
-      "isDone": false,
+      "isDone": true,
       "isRemoved": false,
-      "id": 1
+      "id": 1,
+      "order": 1691525763488
     },
     {
       "name": "Zad2",
       "time": 0,
       "isRunning": false,
-      "isDone": false,
+      "isDone": true,
       "isRemoved": false,
-      "order": 0,
+      "order": 1691525760520,
       "id": 2
     },
     {
       "name": "Zad3",
       "time": 0,
       "isRunning": false,
-      "isDone": false,
+      "isDone": true,
       "isRemoved": false,
-      "order": 0,
+      "order": 1691525765024,
       "id": 3
     },
     {
       "name": "Zad4",
       "time": 0,
       "isRunning": false,
-      "isDone": false,
+      "isDone": true,
       "isRemoved": false,
-      "order": 0,
+      "order": 1691525762792,
       "id": 4
     }
   ]
