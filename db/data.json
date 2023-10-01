@@ -2,12 +2,12 @@
   "data": [
     {
       "name": "Zadanie 1",
-      "time": 0,
+      "time": 5,
       "isRunning": false,
-      "isDone": false,
+      "isDone": true,
       "isRemoved": false,
-      "order": 0,
-      "id": 1
+      "id": 1,
+      "order": 1696180197058
     },
     {
       "name": "Zadanie 2",
