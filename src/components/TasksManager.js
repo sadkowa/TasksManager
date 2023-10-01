@@ -67,9 +67,6 @@ class TasksManager extends React.Component {
 
     startCount(id) {
         this.idInterval = setInterval(() => {
-
-            console.log(id)
-
             const task = this.state.tasks.find(t => t.id === id);
 
             if (task) {
